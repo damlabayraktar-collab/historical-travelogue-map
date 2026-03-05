@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical Travelogue Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=Lora:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --parchment: #f8f6f1;
+            --ink: #2c2416;
+            --ink-light: #5a4e3a;
+            --border: #d4c4a8;
+            --highlight: #8b7355;
+            --territory-roman: rgba(156, 39, 176, 0.25);
+            --territory-ottoman: rgba(198, 40, 40, 0.25);
+            --territory-moldavia: rgba(33, 150, 243, 0.25);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Crimson Pro', serif;
+            background: var(--parchment);
+            color: var(--ink);
+            overflow-x: hidden;
+        }
+        
+        .container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background: linear-gradient(to bottom, #fff 0%, var(--parchment) 100%);
+            border-bottom: 2px solid var(--border);
+            padding: 1.5rem 2rem 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            margin-bottom: 0.25rem;
+            color: var(--ink);
+        }
+        
+        .subtitle {
+            font-size: 0.95rem;
+            color: var(--ink-light);
+            font-style: italic;
+            font-family: 'Lora', serif;
+        }
+        
+        .map-container {
+            flex: 1;
+            position: relative;
+            border: 1px solid var(--border);
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.25rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            min-width: 280px;
+        }
+        
+        .timeline-control {
+            margin-bottom: 1.5rem;
+        }
+        
+        .timeline-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--highlight);
+        }
+        
+        .timeline-year {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--ink);
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: var(--border);
+            outline: none;
+            border-radius: 3px;
+            appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--highlight);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: var(--highlight);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .journey-list {
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+        }
+        
+        .journey-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .journey-item:hover {
+            border-color: var(--highlight);
+            background: #fdfcfa;
+            transform: translateX(2px);
+        }
+        
+        .journey-item.active {
+            background: var(--highlight);
+            color: white;
+            border-color: var(--highlight);
+        }
+        
+        .journey-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .journey-dates {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            font-style: italic;
+        }
+        
+        .citation-popup {
+            max-width: 400px;
+            font-family: 'Lora', serif;
+        }
+        
+        .citation-header {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--highlight);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+        
+        .citation-location {
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .citation-context {
+            font-size: 0.85rem;
+            font-style: italic;
+            color: var(--ink-light);
+            margin-bottom: 0.75rem;
+        }
+        
+        .citation-text {
+            line-height: 1.6;
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+            font-style: italic;
+            padding-left: 1rem;
+            border-left: 3px solid var(--border);
+        }
+        
+        .citation-traveler {
+            font-size: 0.85rem;
+            color: var(--ink-light);
+            text-align: right;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .legend-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--highlight);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.4rem;
+            font-size: 0.9rem;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 12px;
+            margin-right: 0.5rem;
+            border: 1px solid rgba(0,0,0,0.2);
+            border-radius: 2px;
+        }
+        
+        .leaflet-popup-content-wrapper {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+        
+        .leaflet-popup-tip {
+            background: white;
+            border: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Historical Travelogue Map</h1>
+            <p class="subtitle">Mobility, Territories & Citations across Centuries</p>
+        </header>
+        
+        <div class="map-container">
+            <div id="map"></div>
+            
+            <div class="controls">
+                <div class="timeline-control">
+                    <div class="timeline-label">Timeline</div>
+                    <div class="timeline-year" id="yearDisplay">1608</div>
+                    <input type="range" id="timelineSlider" min="380" max="1900" value="1608" step="1">
+                </div>
+                
+                <div class="journey-list" id="journeyList"></div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-title">Territories</div>
+                <div id="legendContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Historical data structure - easily editable
+        const travelogues = [
+            {
+                id: 'simeon',
+                traveler: "Simeon of Poland",
+                work: "Polonyalı Simeon'un Seyahatnamesi",
+                dates: "1608-1619",
+                yearStart: 1608,
+                yearEnd: 1619,
+                route: [
+                    {
+                        name: "Galați (Kalas)",
+                        coords: [45.4353, 28.0080],
+                        citation: "Berlad'dan çıktıktan sonra üç günde Boğdan'ın son şehri olup Türk memleketinin giriş noktası olan Kalas'a vardık. (...) 22 Ağustos Pazar günü bu sonsuz nehri (Tuna) geçtik ve pazartesi karşı kıyıya çıkarak Orta adlı bir köye geldik. Üç gün kaldığımız bu köyde Türkler gümrük resmi aldılar.",
+                        context: "Ottoman customs post at Moldavian border"
+                    },
+                    {
+                        name: "Istanbul - Bedesten",
+                        coords: [41.0082, 28.9784],
+                        citation: "Bedesten'in ikinci kapısı, muhtelif milletlerden birçok esirlerin satıldığı mahaldir.",
+                        context: "Slave market in Ottoman capital"
+                    },
+                    {
+                        name: "Gelibolu (Gallipoli)",
+                        coords: [40.4111, 26.6708],
+                        citation: "N. de Nikolai, Türkiye'den avdet edip (dönüp) Boğaz'dan geçen her büyük geminin, hangi millete mensup olursa olsun, taharri edilmek (aranmak) üzere Gelibolu'da üç gün demir atmak mecburiyetinde olduğunu söyler.",
+                        context: "Mandatory inspection point for vessels leaving Ottoman waters"
+                    },
+                    {
+                        name: "Ramla",
+                        coords: [31.9290, 34.8676],
+                        citation: "Remle'den Kudüs'e deniz yolu ile de gidildiği için, Kudüs patriği tarafından gelen tercümanlar orada toplanan hacıları alıp götürürlerdi. (...) Remle'de adam başına ikişer buçuk kuruş kafar aldılar, çünkü ağır kafar mevkilerinden biri burası, biri de Gatya'dır.",
+                        context: "Pilgrimage transit point; kafar (protection fee) collection"
+                    },
+                    {
+                        name: "Aleppo",
+                        coords: [36.2021, 37.1343],
+                        citation: "Halep şehri, kuleli ve kaleli bir surla çevrilmiştir. On adet kapısı vardır. Burçlarda toplar konulmuştur. (...) Tavernier'ye nazaran (...) Türkler, Araplar, İranlılar, Hindliler hariç, Halep'te daima pek çok sayıda Fransız, İtalyan, İngiliz ve Hollandalı tacirler ve bu muhterin menfaatlerini koruyan konsolosları vardır.",
+                        context: "Major trading hub with European consular presence"
+                    }
+                ],
+                color: '#c62828'
+            },
+            {
+                id: 'etheria',
+                traveler: "Etheria (Egeria)",
+                work: "The Pilgrimage of Etheria",
+                dates: "381-384 CE",
+                yearStart: 381,
+                yearEnd: 384,
+                route: [
+                    {
+                        name: "Seleucia (Silifke)",
+                        coords: [36.3773, 33.9322],
+                        citation: "(...) there are very many cells on the hill and in the midst of it a great wall which encloses the church containing the very beautiful memorial. The wall was built to guard the church because of the Hisauri, who are very-malicious and who frequently commit acts of robbery, to prevent them from making an attempt on the monastery which is established there.",
+                        context: "Late Roman fortified monastery; banditry concerns"
+                    },
+                    {
+                        name: "Migdol",
+                        coords: [31.1833, 32.3167],
+                        citation: "Epauleum was shown to us from the opposite side, when we were at Migdol, where there is now a fort with an officer set over soldiers to maintain Roman discipline. These escorted us thence, according to custom, to another fort, and Baal-zephon was shown to us when we were at that place.",
+                        context: "Roman military escort system for pilgrim protection"
+                    }
+                ],
+                color: '#7b1fa2'
+            }
+        ];
+
+        // Historical territorial data from scholarly sources
+        // Embedded GeoJSON data - can also be loaded from external files
+        const TERRITORY_DATA = {
+            382: {
+                "type": "FeatureCollection",
+                "features": [{
+                    "type": "Feature",
+                    "properties": {
+                        "name": "Roman Empire (Late Antiquity)",
+                        "year_start": 330,
+                        "year_end": 395,
+                        "color": "rgba(156, 39, 176, 0.25)",
+                        "border_color": "rgba(156, 39, 176, 0.7)",
+                        "description": "Eastern Roman Empire, Etheria's pilgrimage period",
+                        "sources": ["Cambridge Ancient History Vol. XIII", "Barrington Atlas"]
+                    },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[
+                            [26.0, 42.0], [29.5, 41.5], [35.0, 41.0], [40.0, 39.0],
+                            [43.0, 37.5], [44.0, 33.0], [35.5, 31.5], [32.0, 31.0],
+                            [31.5, 30.0], [29.0, 32.0], [26.0, 34.5], [25.0, 37.0],
+                            [24.0, 40.0], [26.0, 42.0]
+                        ]]
+                    }
+                }]
+            },
+            1608: {
+                "type": "FeatureCollection",
+                "features": [{
+                    "type": "Feature",
+                    "properties": {
+                        "name": "Ottoman Empire (Early 17th Century)",
+                        "year_start": 1550,
+                        "year_end": 1650,
+                        "color": "rgba(198, 40, 40, 0.25)",
+                        "border_color": "rgba(198, 40, 40, 0.7)",
+                        "description": "Ottoman Empire at territorial peak, Simeon's period",
+                        "sources": ["Shaw, History of the Ottoman Empire (1976)"]
+                    },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[
+                            [26.0, 48.0], [28.5, 47.0], [20.0, 46.5], [16.0, 45.0],
+                            [19.0, 43.0], [19.0, 42.0], [20.0, 39.5], [23.0, 37.0],
+                            [28.0, 36.0], [35.0, 36.5], [36.0, 36.0], [36.0, 33.0],
+                            [34.5, 31.0], [34.5, 29.0], [31.5, 31.0], [30.0, 32.5],
+                            [27.0, 35.0], [23.0, 37.0], [26.0, 40.0], [28.0, 42.0],
+                            [35.0, 42.0], [40.0, 41.0], [43.0, 39.0], [44.0, 36.5],
+                            [47.0, 33.0], [48.0, 30.0], [43.0, 29.0], [35.0, 31.0],
+                            [36.0, 36.0], [35.0, 39.0], [32.0, 41.0], [30.0, 42.0],
+                            [28.5, 43.0], [28.0, 45.5], [28.0, 47.0], [26.0, 48.0]
+                        ]]
+                    }
+                }, {
+                    "type": "Feature",
+                    "properties": {
+                        "name": "Principality of Moldavia",
+                        "year_start": 1538,
+                        "year_end": 1859,
+                        "color": "rgba(33, 150, 243, 0.25)",
+                        "border_color": "rgba(33, 150, 243, 0.7)",
+                        "description": "Ottoman vassal state, Simeon's border crossing point",
+                        "sources": ["Stoicescu, Sfatul domnesc și marii dregători (1968)"]
+                    },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[
+                            [26.0, 48.5], [28.0, 48.0], [29.5, 46.5], [30.0, 46.0],
+                            [29.0, 45.5], [28.0, 45.0], [27.0, 45.5], [26.0, 46.5],
+                            [25.0, 47.5], [26.0, 48.5]
+                        ]]
+                    }
+                }]
+            }
+        };
+
+        // Initialize map
+        const map = L.map('map', {
+            zoomControl: true,
+            scrollWheelZoom: true
+        }).setView([38, 32], 5);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors, © CARTO',
+            maxZoom: 19
+        }).addTo(map);
+
+        let territoryLayers = [];
+        let routeLayers = {};
+        let activeJourneys = new Set(['simeon']);
+
+        // Timeline slider
+        const slider = document.getElementById('timelineSlider');
+        const yearDisplay = document.getElementById('yearDisplay');
+
+        slider.addEventListener('input', (e) => {
+            const year = parseInt(e.target.value);
+            yearDisplay.textContent = year;
+            updateTerritories(year);
+            updateVisibleJourneys(year);
+        });
+
+        // Update territories based on year
+        function updateTerritories(year) {
+            // Remove old territories
+            territoryLayers.forEach(layer => map.removeLayer(layer));
+            territoryLayers = [];
+
+            const legendContent = document.getElementById('legendContent');
+            legendContent.innerHTML = '';
+
+            // Find closest year data available
+            let closestYear = null;
+            let minDiff = Infinity;
+            
+            for (const dataYear of Object.keys(TERRITORY_DATA)) {
+                const diff = Math.abs(parseInt(dataYear) - year);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestYear = dataYear;
+                }
+            }
+            
+            // Load territories if we have data for a nearby year (within 50 years)
+            if (closestYear && minDiff <= 50) {
+                const data = TERRITORY_DATA[closestYear];
+                
+                data.features.forEach(feature => {
+                    const props = feature.properties;
+                    
+                    // Check if territory is active in this year
+                    if (year >= props.year_start && year <= props.year_end) {
+                        // Create polygon from GeoJSON coordinates
+                        const layer = L.geoJSON(feature, {
+                            style: {
+                                color: props.border_color,
+                                fillColor: props.color,
+                                fillOpacity: 0.25,
+                                weight: 2
+                            }
+                        });
+                        
+                        // Add popup with information
+                        layer.bindPopup(`
+                            <div style="font-family: 'Lora', serif;">
+                                <strong>${props.name}</strong><br>
+                                <em>${props.description}</em><br>
+                                <small>Active: ${props.year_start}-${props.year_end}</small><br>
+                                <small style="color: #5a4e3a;">Sources: ${props.sources.join(', ')}</small>
+                            </div>
+                        `);
+                        
+                        layer.addTo(map);
+                        territoryLayers.push(layer);
+
+                        // Add to legend
+                        const legendItem = document.createElement('div');
+                        legendItem.className = 'legend-item';
+                        legendItem.innerHTML = `
+                            <div class="legend-color" style="background: ${props.color}; border-color: ${props.border_color}"></div>
+                            <span>${props.name}</span>
+                        `;
+                        legendContent.appendChild(legendItem);
+                    }
+                });
+            }
+        }
+
+        // Update visible journeys based on timeline
+        function updateVisibleJourneys(year) {
+            travelogues.forEach(journey => {
+                const isInRange = year >= journey.yearStart && year <= journey.yearEnd;
+                const journeyElement = document.querySelector(`[data-journey="${journey.id}"]`);
+                
+                if (isInRange) {
+                    journeyElement.style.opacity = '1';
+                    journeyElement.style.pointerEvents = 'auto';
+                } else {
+                    journeyElement.style.opacity = '0.4';
+                    journeyElement.style.pointerEvents = 'none';
+                }
+
+                // Update route visibility
+                if (routeLayers[journey.id]) {
+                    routeLayers[journey.id].forEach(layer => {
+                        if (isInRange && activeJourneys.has(journey.id)) {
+                            map.addLayer(layer);
+                        } else {
+                            map.removeLayer(layer);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Create journey routes
+        function createRoute(journey) {
+            const layers = [];
+            const coords = journey.route.map(p => p.coords);
+
+            // Draw route line
+            const routeLine = L.polyline(coords, {
+                color: journey.color,
+                weight: 3,
+                opacity: 0.7,
+                dashArray: '10, 10'
+            });
+            layers.push(routeLine);
+
+            // Add markers with citations
+            journey.route.forEach((point, index) => {
+                const marker = L.circleMarker(point.coords, {
+                    radius: 8,
+                    fillColor: journey.color,
+                    color: 'white',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.9
+                });
+
+                const popupContent = `
+                    <div class="citation-popup">
+                        <div class="citation-header">
+                            <div class="citation-location">${point.name}</div>
+                            <div class="citation-context">${point.context}</div>
+                        </div>
+                        <div class="citation-text">"${point.citation}"</div>
+                        <div class="citation-traveler">— ${journey.traveler}, ${journey.work} (${journey.dates})</div>
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent, { maxWidth: 400 });
+                layers.push(marker);
+            });
+
+            routeLayers[journey.id] = layers;
+        }
+
+        // Create journey list
+        const journeyList = document.getElementById('journeyList');
+        travelogues.forEach(journey => {
+            const item = document.createElement('div');
+            item.className = 'journey-item active';
+            item.dataset.journey = journey.id;
+            item.innerHTML = `
+                <div class="journey-name">${journey.traveler}</div>
+                <div class="journey-dates">${journey.dates}</div>
+            `;
+
+            item.addEventListener('click', () => {
+                if (activeJourneys.has(journey.id)) {
+                    activeJourneys.delete(journey.id);
+                    item.classList.remove('active');
+                    routeLayers[journey.id].forEach(layer => map.removeLayer(layer));
+                } else {
+                    activeJourneys.add(journey.id);
+                    item.classList.add('active');
+                    const currentYear = parseInt(slider.value);
+                    if (currentYear >= journey.yearStart && currentYear <= journey.yearEnd) {
+                        routeLayers[journey.id].forEach(layer => map.addLayer(layer));
+                    }
+                }
+            });
+
+            journeyList.appendChild(item);
+            createRoute(journey);
+        });
+
+        // Initial render
+        updateTerritories(1608);
+        updateVisibleJourneys(1608);
+        
+        // Show active routes
+        activeJourneys.forEach(journeyId => {
+            routeLayers[journeyId].forEach(layer => map.addLayer(layer));
+        });
+    </script>
+</body>
+</html>
