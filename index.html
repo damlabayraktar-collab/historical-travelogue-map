@@ -3,29 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historical Travelogue Map</title>
+    <title>Ibn Battuta's Travels 1325-1354</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=Lora:ital@0;1&display=swap" rel="stylesheet">
     <style>
         :root {
-            --parchment: #f8f6f1;
+            --parchment: #f4e4c1;
             --ink: #2c2416;
             --ink-light: #5a4e3a;
-            --border: #d4c4a8;
-            --highlight: #8b7355;
-            --territory-roman: rgba(156, 39, 176, 0.25);
-            --territory-ottoman: rgba(198, 40, 40, 0.25);
-            --territory-moldavia: rgba(33, 150, 243, 0.25);
+            --border: #8b7355;
+            --highlight: #c17817;
+            --morocco: #8b0000;
         }
         
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: 'Crimson Pro', serif;
+            font-family: 'Crimson Pro', Georgia, serif;
             background: var(--parchment);
             color: var(--ink);
             overflow-x: hidden;
@@ -39,198 +33,125 @@
         }
         
         header {
-            background: linear-gradient(to bottom, #fff 0%, var(--parchment) 100%);
-            border-bottom: 2px solid var(--border);
-            padding: 1.5rem 2rem 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            background: linear-gradient(135deg, #8b6914 0%, #c17817 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
         
         h1 {
-            font-size: 1.75rem;
+            font-size: 2rem;
             font-weight: 600;
-            letter-spacing: 0.03em;
-            margin-bottom: 0.25rem;
-            color: var(--ink);
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
         
         .subtitle {
-            font-size: 0.95rem;
-            color: var(--ink-light);
+            font-size: 1rem;
             font-style: italic;
             font-family: 'Lora', serif;
+            opacity: 0.95;
         }
         
         .map-container {
             flex: 1;
             position: relative;
-            border: 1px solid var(--border);
         }
         
-        #map {
-            width: 100%;
-            height: 100%;
-        }
+        #map { width: 100%; height: 100%; }
         
         .controls {
             position: absolute;
             top: 1rem;
             left: 1rem;
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.97);
             backdrop-filter: blur(10px);
-            padding: 1.25rem;
-            border-radius: 4px;
-            border: 1px solid var(--border);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            min-width: 280px;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            max-width: 350px;
+            max-height: 85vh;
+            overflow-y: auto;
         }
         
-        .timeline-control {
+        .control-section {
             margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e0d4b8;
         }
         
-        .timeline-label {
+        .control-section:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        
+        .section-title {
             font-weight: 600;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: var(--highlight);
+            margin-bottom: 1rem;
         }
         
-        .timeline-year {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-            color: var(--ink);
+        .journey-grid {
+            display: grid;
+            gap: 0.75rem;
         }
         
-        input[type="range"] {
-            width: 100%;
-            height: 6px;
-            background: var(--border);
-            outline: none;
-            border-radius: 3px;
-            appearance: none;
-        }
-        
-        input[type="range"]::-webkit-slider-thumb {
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            background: var(--highlight);
-            cursor: pointer;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        
-        input[type="range"]::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
-            background: var(--highlight);
-            cursor: pointer;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        
-        .journey-list {
-            border-top: 1px solid var(--border);
-            padding-top: 1rem;
-        }
-        
-        .journey-item {
+        .journey-btn {
             padding: 0.75rem;
-            margin-bottom: 0.5rem;
             background: white;
-            border: 1px solid var(--border);
-            border-radius: 3px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s;
+            text-align: left;
         }
         
-        .journey-item:hover {
+        .journey-btn:hover {
             border-color: var(--highlight);
             background: #fdfcfa;
             transform: translateX(2px);
         }
         
-        .journey-item.active {
+        .journey-btn.active {
             background: var(--highlight);
             color: white;
             border-color: var(--highlight);
         }
         
-        .journey-name {
+        .journey-btn-title {
             font-weight: 600;
             font-size: 0.95rem;
             margin-bottom: 0.25rem;
         }
         
-        .journey-dates {
+        .journey-btn-dates {
             font-size: 0.85rem;
             opacity: 0.8;
             font-style: italic;
         }
         
-        .citation-popup {
-            max-width: 400px;
-            font-family: 'Lora', serif;
-        }
-        
-        .citation-header {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--highlight);
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 0.5rem;
-        }
-        
-        .citation-location {
-            font-size: 1.1rem;
-            margin-bottom: 0.25rem;
-        }
-        
-        .citation-context {
-            font-size: 0.85rem;
-            font-style: italic;
-            color: var(--ink-light);
-            margin-bottom: 0.75rem;
-        }
-        
-        .citation-text {
-            line-height: 1.6;
-            font-size: 0.95rem;
-            margin-bottom: 0.75rem;
-            font-style: italic;
-            padding-left: 1rem;
-            border-left: 3px solid var(--border);
-        }
-        
-        .citation-traveler {
-            font-size: 0.85rem;
-            color: var(--ink-light);
-            text-align: right;
-        }
-        
         .legend {
             position: absolute;
             bottom: 1rem;
-            right: 1rem;
+            left: 1rem;
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.97);
             padding: 1rem;
-            border-radius: 4px;
-            border: 1px solid var(--border);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            max-width: 250px;
         }
         
         .legend-title {
             font-weight: 600;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: var(--highlight);
@@ -239,341 +160,407 @@
         .legend-item {
             display: flex;
             align-items: center;
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.5rem;
             font-size: 0.9rem;
         }
         
-        .legend-color {
-            width: 20px;
-            height: 12px;
-            margin-right: 0.5rem;
-            border: 1px solid rgba(0,0,0,0.2);
+        .legend-line {
+            width: 30px;
+            height: 3px;
+            margin-right: 0.75rem;
             border-radius: 2px;
+        }
+        
+        .info-box {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 999;
+            background: rgba(139, 120, 20, 0.95);
+            color: white;
+            padding: 1.25rem;
+            border-radius: 8px;
+            max-width: 300px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+        
+        .info-box h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-box p {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 0.5rem;
         }
         
         .leaflet-popup-content-wrapper {
             background: white;
-            border: 1px solid var(--border);
-            border-radius: 4px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-family: 'Lora', serif;
         }
         
-        .leaflet-popup-tip {
-            background: white;
-            border: 1px solid var(--border);
+        .popup-header {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--highlight);
+            font-size: 1.1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e0d4b8;
+        }
+        
+        .popup-context {
+            font-size: 0.9rem;
+            font-style: italic;
+            color: var(--ink-light);
+            margin-bottom: 0.75rem;
+        }
+        
+        .popup-citation {
+            line-height: 1.7;
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+            padding-left: 1rem;
+            border-left: 3px solid var(--highlight);
+            font-style: italic;
+        }
+        
+        .popup-meta {
+            font-size: 0.85rem;
+            color: var(--ink-light);
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #e0d4b8;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Historical Travelogue Map</h1>
-            <p class="subtitle">Mobility, Territories & Citations across Centuries</p>
+            <h1>Ibn Battuta's Travels (1325-1354)</h1>
+            <p class="subtitle">117,000 km across Africa, Asia & Iberia • Mobility Policies of the Medieval Islamic World</p>
         </header>
         
         <div class="map-container">
             <div id="map"></div>
             
             <div class="controls">
-                <div class="timeline-control">
-                    <div class="timeline-label">Timeline</div>
-                    <div class="timeline-year" id="yearDisplay">1608</div>
-                    <input type="range" id="timelineSlider" min="380" max="1900" value="1608" step="1">
+                <div class="control-section">
+                    <div class="section-title">Select Journeys</div>
+                    <div class="journey-grid" id="journeyButtons"></div>
                 </div>
                 
-                <div class="journey-list" id="journeyList"></div>
+                <div class="control-section">
+                    <div class="section-title">About the Travels</div>
+                    <p style="font-size: 0.9rem; line-height: 1.6;">
+                        Ibn Battuta (1304-1368/69) traveled more than any explorer in pre-modern history. 
+                        His <em>Rihla</em> documents mobility regimes, trade networks, and political 
+                        boundaries across the medieval Islamic world (Dar al-Islam).
+                    </p>
+                </div>
             </div>
             
             <div class="legend">
-                <div class="legend-title">Territories</div>
+                <div class="legend-title">Journey Routes</div>
                 <div id="legendContent"></div>
+            </div>
+            
+            <div class="info-box">
+                <h3>Click any location marker</h3>
+                <p>View Ibn Battuta's observations about mobility restrictions, border controls, 
+                   captive exchanges, and travel regulations in the 14th century.</p>
             </div>
         </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Historical data structure - easily editable
-        const travelogues = [
+        // Journey Data - Based on your images and historical sources
+        const journeys = [
             {
-                id: 'simeon',
-                traveler: "Simeon of Poland",
-                work: "Polonyalı Simeon'un Seyahatnamesi",
-                dates: "1608-1619",
-                yearStart: 1608,
-                yearEnd: 1619,
-                route: [
+                id: 'hajj_1325',
+                name: "First Hajj Journey",
+                dates: "1325-1327",
+                color: "#e74c3c",
+                description: "Tangier → Mecca via North Africa and Egypt",
+                places: [
                     {
-                        name: "Galați (Kalas)",
-                        coords: [45.4353, 28.0080],
-                        citation: "Berlad'dan çıktıktan sonra üç günde Boğdan'ın son şehri olup Türk memleketinin giriş noktası olan Kalas'a vardık. (...) 22 Ağustos Pazar günü bu sonsuz nehri (Tuna) geçtik ve pazartesi karşı kıyıya çıkarak Orta adlı bir köye geldik. Üç gün kaldığımız bu köyde Türkler gümrük resmi aldılar.",
-                        context: "Ottoman customs post at Moldavian border"
+                        name: "Tangier",
+                        coords: [35.7595, -5.8340],
+                        context: "Birthplace; departure point June 1325",
+                        citation: "Ibn Battuta set off from his home town at the age of 21 to perform a hajj (pilgrimage) to Mecca, a journey that would ordinarily take sixteen months."
                     },
                     {
-                        name: "Istanbul - Bedesten",
-                        coords: [41.0082, 28.9784],
-                        citation: "Bedesten'in ikinci kapısı, muhtelif milletlerden birçok esirlerin satıldığı mahaldir.",
-                        context: "Slave market in Ottoman capital"
+                        name: "Tunis",
+                        coords: [36.8065, 10.1815],
+                        context: "Hafsid Sultanate; stayed 2 months",
+                        citation: "For safety, Ibn Battuta usually joined a caravan to reduce the risk of being robbed."
                     },
                     {
-                        name: "Gelibolu (Gallipoli)",
-                        coords: [40.4111, 26.6708],
-                        citation: "N. de Nikolai, Türkiye'den avdet edip (dönüp) Boğaz'dan geçen her büyük geminin, hangi millete mensup olursa olsun, taharri edilmek (aranmak) üzere Gelibolu'da üç gün demir atmak mecburiyetinde olduğunu söyler.",
-                        context: "Mandatory inspection point for vessels leaving Ottoman waters"
+                        name: "Alexandria",
+                        coords: [31.2001, 29.9187],
+                        context: "Mamluk Empire port; met Sheikh who prophesied world travels",
+                        citation: "Sheikh Burhanuddin foretold the destiny of Ibn Battuta as a world traveller and told him: 'You must visit my brother Fariduddin in India, Rukonuddin in Sind, and Burhanuddin in China.'"
                     },
                     {
-                        name: "Ramla",
-                        coords: [31.9290, 34.8676],
-                        citation: "Remle'den Kudüs'e deniz yolu ile de gidildiği için, Kudüs patriği tarafından gelen tercümanlar orada toplanan hacıları alıp götürürlerdi. (...) Remle'de adam başına ikişer buçuk kuruş kafar aldılar, çünkü ağır kafar mevkilerinden biri burası, biri de Gatya'dır.",
-                        context: "Pilgrimage transit point; kafar (protection fee) collection"
+                        name: "Cairo",
+                        coords: [30.0444, 31.2357],
+                        context: "Mamluk capital; major transit hub",
+                        citation: "After spending about a month in Cairo, he embarked on the first of many detours within the relative safety of Mamluk territory."
                     },
                     {
-                        name: "Aleppo",
-                        coords: [36.2021, 37.1343],
-                        citation: "Halep şehri, kuleli ve kaleli bir surla çevrilmiştir. On adet kapısı vardır. Burçlarda toplar konulmuştur. (...) Tavernier'ye nazaran (...) Türkler, Araplar, İranlılar, Hindliler hariç, Halep'te daima pek çok sayıda Fransız, İtalyan, İngiliz ve Hollandalı tacirler ve bu muhterin menfaatlerini koruyan konsolosları vardır.",
-                        context: "Major trading hub with European consular presence"
+                        name: "Damascus",
+                        coords: [33.5138, 36.2765],
+                        context: "Mamluk Syria; major scholarly center",
+                        citation: "Damascus surpasses all other cities in beauty, and no description, however full, can do justice to its charms."
+                    },
+                    {
+                        name: "Mecca",
+                        coords: [21.4225, 39.8262],
+                        context: "Hajj destination; visited multiple times",
+                        citation: "The holy sanctuary - pilgrimage completed 1326"
                     }
-                ],
-                color: '#c62828'
+                ]
             },
             {
-                id: 'etheria',
-                traveler: "Etheria (Egeria)",
-                work: "The Pilgrimage of Etheria",
-                dates: "381-384 CE",
-                yearStart: 381,
-                yearEnd: 384,
-                route: [
+                id: 'east_africa',
+                name: "East African Coast",
+                dates: "1330-1332",
+                color: "#3498db",
+                description: "Red Sea → Swahili Coast trading cities",
+                places: [
                     {
-                        name: "Seleucia (Silifke)",
-                        coords: [36.3773, 33.9322],
-                        citation: "(...) there are very many cells on the hill and in the midst of it a great wall which encloses the church containing the very beautiful memorial. The wall was built to guard the church because of the Hisauri, who are very-malicious and who frequently commit acts of robbery, to prevent them from making an attempt on the monastery which is established there.",
-                        context: "Late Roman fortified monastery; banditry concerns"
+                        name: "Mogadishu",
+                        coords: [2.0469, 45.3182],
+                        context: "Somali coast; prosperous trading city",
+                        citation: "A large town with enormous markets and wealthy merchants. The people are very trustworthy."
                     },
                     {
-                        name: "Migdol",
-                        coords: [31.1833, 32.3167],
-                        citation: "Epauleum was shown to us from the opposite side, when we were at Migdol, where there is now a fort with an officer set over soldiers to maintain Roman discipline. These escorted us thence, according to custom, to another fort, and Baal-zephon was shown to us when we were at that place.",
-                        context: "Roman military escort system for pilgrim protection"
+                        name: "Mombasa",
+                        coords: [-4.0435, 39.6682],
+                        context: "Swahili city-state; Indian Ocean trade",
+                        citation: "Mombasa is a large island... The people are Shafi'i Muslims, religious and chaste. Their mosques are strongly constructed of wood."
+                    },
+                    {
+                        name: "Kilwa",
+                        coords: [-8.9569, 39.5125],
+                        context: "Sultanate of Kilwa; gold trade center",
+                        citation: "Kilwa is a large town on the coast... amongst the most beautiful of cities and elegantly built. The greater part of its inhabitants are Zanj, jet-black in colour."
                     }
-                ],
-                color: '#7b1fa2'
+                ]
+            },
+            {
+                id: 'anatolia_golden_horde',
+                name: "Anatolia & Golden Horde",
+                dates: "1332-1334",
+                color: "#f39c12",
+                description: "Through Seljuk territories to the Mongol Khanate",
+                places: [
+                    {
+                        name: "Alanya",
+                        coords: [36.5437, 31.9982],
+                        context: "Seljuk Anatolia; hospitable Christians",
+                        citation: "We traveled on the sea for ten nights, and the Christians treated us honorably and took no passage money from us... This country is one of the finest in the world."
+                    },
+                    {
+                        name: "Constantinople",
+                        coords: [41.0082, 28.9784],
+                        context: "Byzantine Empire capital",
+                        citation: "The city is divided into two parts separated by a great river... one part is called Istambol and is inhabited by the Muslims; the other is Galata and is inhabited by the Franks."
+                    },
+                    {
+                        name: "New Sarai",
+                        coords: [48.5, 45.3],
+                        context: "Capital of Golden Horde; Mongol territory",
+                        citation: "At every halt the Turks loose their horses, oxen and camels and drive them out to pasture at liberty, night or day, without shepherds. This is due to the severity of their laws against theft. Any person found in possession of a stolen horse is obliged to restore it with nine others."
+                    }
+                ]
+            },
+            {
+                id: 'india_china',
+                name: "India & China",
+                dates: "1341-1347",
+                color: "#9b59b6",
+                description: "Delhi Sultanate service; voyage to China",
+                places: [
+                    {
+                        name: "Delhi",
+                        coords: [28.7041, 77.1025],
+                        context: "Delhi Sultanate; served Sultan Muhammad bin Tughluq as qadi",
+                        citation: "The Sultan of India is Sultan Muhammad Shah, son of Ghiyath al-Din Tughluq. The sultan is most generous with gifts and very bloodthirsty."
+                    },
+                    {
+                        name: "Calicut",
+                        coords: [11.2588, 75.7804],
+                        context: "Major spice trade port; Hindu Zamorin ruler",
+                        citation: "Calicut is one of the chief ports in Malabar... The king is an infidel, but he governs justly. The Muslims are honored in his country."
+                    },
+                    {
+                        name: "Quanzhou",
+                        coords: [24.8740, 118.6757],
+                        context: "Yuan Dynasty China; major port",
+                        citation: "Zayton is a huge city. In it are manufactured the flowered silks called zaituniya... The harbour is one of the largest in the world."
+                    }
+                ]
+            },
+            {
+                id: 'spain_mali',
+                name: "Spain & Mali",
+                dates: "1349-1354",
+                color: "#16a085",
+                description: "Final journeys: Iberian Peninsula and West Africa",
+                places: [
+                    {
+                        name: "Granada",
+                        coords: [37.1773, -3.5986],
+                        context: "Nasrid Emirate; last Muslim kingdom in Iberia",
+                        citation: "Granada is the capital of Andalusia and the bride of its cities. Its environs have not their equal in any country in the world."
+                    },
+                    {
+                        name: "Ceuta",
+                        coords: [35.8894, -5.3213],
+                        context: "Marinid Morocco; later referenced in Spanish embassy text (1766)",
+                        citation: "There were 2,000 criminals and law-breakers from Spain: the custom of the Spaniards was to exile to Ceuta, Melilla, Oran all the thieves and highway robbers. The length of their punishment depended on their crimes."
+                    },
+                    {
+                        name: "Timbuktu",
+                        coords: [16.7666, -3.0026],
+                        context: "Mali Empire; trans-Saharan trade hub",
+                        citation: "Then I traveled to the city of Timbuktu... The inhabitants are rich and have many properties in gold and other valuables."
+                    },
+                    {
+                        name: "Gao",
+                        coords: [16.2833, -0.0333],
+                        context: "Mali Empire; Niger River port",
+                        citation: "After spending a month in Gao, Ibn Battuta set off with a large caravan for the oasis of Takedda, receiving a message from the Sultan of Morocco commanding him to return home."
+                    }
+                ]
             }
         ];
 
-        // Historical territorial data from scholarly sources
-        // Embedded GeoJSON data - can also be loaded from external files
-        const TERRITORY_DATA = {
-            382: {
-                "type": "FeatureCollection",
-                "features": [{
-                    "type": "Feature",
-                    "properties": {
-                        "name": "Roman Empire (Late Antiquity)",
-                        "year_start": 330,
-                        "year_end": 395,
-                        "color": "rgba(156, 39, 176, 0.25)",
-                        "border_color": "rgba(156, 39, 176, 0.7)",
-                        "description": "Eastern Roman Empire, Etheria's pilgrimage period",
-                        "sources": ["Cambridge Ancient History Vol. XIII", "Barrington Atlas"]
-                    },
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [[
-                            [26.0, 42.0], [29.5, 41.5], [35.0, 41.0], [40.0, 39.0],
-                            [43.0, 37.5], [44.0, 33.0], [35.5, 31.5], [32.0, 31.0],
-                            [31.5, 30.0], [29.0, 32.0], [26.0, 34.5], [25.0, 37.0],
-                            [24.0, 40.0], [26.0, 42.0]
-                        ]]
-                    }
-                }]
+        // Additional locations from Spanish Embassy text (1766) - showing continuity of mobility policies
+        const spanishEmbassyLocations = [
+            {
+                name: "Toledo",
+                coords: [39.8628, -4.0273],
+                year: 1780,
+                context: "Moroccan embassy; restricted itineraries",
+                citation: "Ambassadors in Spain were given specific itineraries from which they could not deviate, and they always had guards with them, partly to make sure they did not."
             },
-            1608: {
-                "type": "FeatureCollection",
-                "features": [{
-                    "type": "Feature",
-                    "properties": {
-                        "name": "Ottoman Empire (Early 17th Century)",
-                        "year_start": 1550,
-                        "year_end": 1650,
-                        "color": "rgba(198, 40, 40, 0.25)",
-                        "border_color": "rgba(198, 40, 40, 0.7)",
-                        "description": "Ottoman Empire at territorial peak, Simeon's period",
-                        "sources": ["Shaw, History of the Ottoman Empire (1976)"]
-                    },
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [[
-                            [26.0, 48.0], [28.5, 47.0], [20.0, 46.5], [16.0, 45.0],
-                            [19.0, 43.0], [19.0, 42.0], [20.0, 39.5], [23.0, 37.0],
-                            [28.0, 36.0], [35.0, 36.5], [36.0, 36.0], [36.0, 33.0],
-                            [34.5, 31.0], [34.5, 29.0], [31.5, 31.0], [30.0, 32.5],
-                            [27.0, 35.0], [23.0, 37.0], [26.0, 40.0], [28.0, 42.0],
-                            [35.0, 42.0], [40.0, 41.0], [43.0, 39.0], [44.0, 36.5],
-                            [47.0, 33.0], [48.0, 30.0], [43.0, 29.0], [35.0, 31.0],
-                            [36.0, 36.0], [35.0, 39.0], [32.0, 41.0], [30.0, 42.0],
-                            [28.5, 43.0], [28.0, 45.5], [28.0, 47.0], [26.0, 48.0]
-                        ]]
-                    }
-                }, {
-                    "type": "Feature",
-                    "properties": {
-                        "name": "Principality of Moldavia",
-                        "year_start": 1538,
-                        "year_end": 1859,
-                        "color": "rgba(33, 150, 243, 0.25)",
-                        "border_color": "rgba(33, 150, 243, 0.7)",
-                        "description": "Ottoman vassal state, Simeon's border crossing point",
-                        "sources": ["Stoicescu, Sfatul domnesc și marii dregători (1968)"]
-                    },
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [[
-                            [26.0, 48.5], [28.0, 48.0], [29.5, 46.5], [30.0, 46.0],
-                            [29.0, 45.5], [28.0, 45.0], [27.0, 45.5], [26.0, 46.5],
-                            [25.0, 47.5], [26.0, 48.5]
-                        ]]
-                    }
-                }]
+            {
+                name: "Madrid",
+                coords: [40.4168, -3.7038],
+                year: 1766,
+                context: "Captive negotiations; diplomatic protocol",
+                citation: "Our master, commander of the faithful, expressed his desire to liberate Muslim captives (held in Spain) and mentioned the alms he had sent with us to them... During our stay in Madrid, the king always inquired after us."
+            },
+            {
+                name: "Segovia",
+                coords: [40.9429, -4.1088],
+                year: 1766,
+                context: "Muslim captives detained far from coast",
+                citation: "We left Madrid toward Segovia to see the Muslim captives. They had been sent there to put a distance between them and the sea lest they escape... The despot says he will need others with whom to ransom his own (captives in Algiers)."
+            },
+            {
+                name: "Cádiz",
+                coords: [36.5297, -6.2924],
+                year: 1766,
+                context: "Port arrival; official welcoming ceremony",
+                citation: "On the shore, we found the governor, the judge, and all officials in the service of their sultan, men and women, standing to welcome us."
+            },
+            {
+                name: "Seville",
+                coords: [37.3891, -5.9845],
+                year: 1766,
+                context: "Grand reception with 200 coaches",
+                citation: "About 200 coaches belonging to its local inhabitants came out to meet us, along with numberless men and women. The deputy governor welcomed us, showing much joy at our arrival."
+            },
+            {
+                name: "Córdoba",
+                coords: [37.8882, -4.7794],
+                year: 1766,
+                context: "Jewish entry restrictions",
+                citation: "It was known that no Jew could enter the country, which was why he would be punished. But if a Jew desired to enter Spain and did not hide his religion, they might give him a pass especially if he was a rich merchant. But they would keep him under military surveillance."
+            },
+            {
+                name: "Écija",
+                coords: [37.5420, -5.0830],
+                year: 1766,
+                context: "Anti-banditry settlement program",
+                citation: "This region had been infested with thieves and highway robbers... the despot ordered the building of houses on both sides of the road. He gave inhabitants goats, chicken, seeds for cultivation, and an ox for plowing. After eight years, the house became their own."
             }
-        };
+        ];
 
         // Initialize map
-        const map = L.map('map', {
-            zoomControl: true,
-            scrollWheelZoom: true
-        }).setView([38, 32], 5);
+        const map = L.map('map').setView([25, 35], 3);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap contributors, © CARTO',
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
             maxZoom: 19
         }).addTo(map);
 
-        let territoryLayers = [];
+        let activeJourneys = new Set(['hajj_1325']);
         let routeLayers = {};
-        let activeJourneys = new Set(['simeon']);
 
-        // Timeline slider
-        const slider = document.getElementById('timelineSlider');
-        const yearDisplay = document.getElementById('yearDisplay');
+        // Create journey buttons
+        const journeyButtons = document.getElementById('journeyButtons');
+        const legendContent = document.getElementById('legendContent');
 
-        slider.addEventListener('input', (e) => {
-            const year = parseInt(e.target.value);
-            yearDisplay.textContent = year;
-            updateTerritories(year);
-            updateVisibleJourneys(year);
+        journeys.forEach(journey => {
+            // Create button
+            const btn = document.createElement('div');
+            btn.className = 'journey-btn' + (activeJourneys.has(journey.id) ? ' active' : '');
+            btn.innerHTML = `
+                <div class="journey-btn-title">${journey.name}</div>
+                <div class="journey-btn-dates">${journey.dates}</div>
+            `;
+            btn.onclick = () => toggleJourney(journey.id, btn);
+            journeyButtons.appendChild(btn);
+
+            // Add to legend
+            const legendItem = document.createElement('div');
+            legendItem.className = 'legend-item';
+            legendItem.innerHTML = `
+                <div class="legend-line" style="background: ${journey.color}"></div>
+                <span>${journey.name}</span>
+            `;
+            legendContent.appendChild(legendItem);
+
+            // Create route layers
+            createRoute(journey);
         });
 
-        // Update territories based on year
-        function updateTerritories(year) {
-            // Remove old territories
-            territoryLayers.forEach(layer => map.removeLayer(layer));
-            territoryLayers = [];
-
-            const legendContent = document.getElementById('legendContent');
-            legendContent.innerHTML = '';
-
-            // Find closest year data available
-            let closestYear = null;
-            let minDiff = Infinity;
-            
-            for (const dataYear of Object.keys(TERRITORY_DATA)) {
-                const diff = Math.abs(parseInt(dataYear) - year);
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    closestYear = dataYear;
-                }
-            }
-            
-            // Load territories if we have data for a nearby year (within 50 years)
-            if (closestYear && minDiff <= 50) {
-                const data = TERRITORY_DATA[closestYear];
-                
-                data.features.forEach(feature => {
-                    const props = feature.properties;
-                    
-                    // Check if territory is active in this year
-                    if (year >= props.year_start && year <= props.year_end) {
-                        // Create polygon from GeoJSON coordinates
-                        const layer = L.geoJSON(feature, {
-                            style: {
-                                color: props.border_color,
-                                fillColor: props.color,
-                                fillOpacity: 0.25,
-                                weight: 2
-                            }
-                        });
-                        
-                        // Add popup with information
-                        layer.bindPopup(`
-                            <div style="font-family: 'Lora', serif;">
-                                <strong>${props.name}</strong><br>
-                                <em>${props.description}</em><br>
-                                <small>Active: ${props.year_start}-${props.year_end}</small><br>
-                                <small style="color: #5a4e3a;">Sources: ${props.sources.join(', ')}</small>
-                            </div>
-                        `);
-                        
-                        layer.addTo(map);
-                        territoryLayers.push(layer);
-
-                        // Add to legend
-                        const legendItem = document.createElement('div');
-                        legendItem.className = 'legend-item';
-                        legendItem.innerHTML = `
-                            <div class="legend-color" style="background: ${props.color}; border-color: ${props.border_color}"></div>
-                            <span>${props.name}</span>
-                        `;
-                        legendContent.appendChild(legendItem);
-                    }
-                });
+        function toggleJourney(journeyId, btn) {
+            if (activeJourneys.has(journeyId)) {
+                activeJourneys.delete(journeyId);
+                btn.classList.remove('active');
+                routeLayers[journeyId].forEach(layer => map.removeLayer(layer));
+            } else {
+                activeJourneys.add(journeyId);
+                btn.classList.add('active');
+                routeLayers[journeyId].forEach(layer => map.addLayer(layer));
             }
         }
 
-        // Update visible journeys based on timeline
-        function updateVisibleJourneys(year) {
-            travelogues.forEach(journey => {
-                const isInRange = year >= journey.yearStart && year <= journey.yearEnd;
-                const journeyElement = document.querySelector(`[data-journey="${journey.id}"]`);
-                
-                if (isInRange) {
-                    journeyElement.style.opacity = '1';
-                    journeyElement.style.pointerEvents = 'auto';
-                } else {
-                    journeyElement.style.opacity = '0.4';
-                    journeyElement.style.pointerEvents = 'none';
-                }
-
-                // Update route visibility
-                if (routeLayers[journey.id]) {
-                    routeLayers[journey.id].forEach(layer => {
-                        if (isInRange && activeJourneys.has(journey.id)) {
-                            map.addLayer(layer);
-                        } else {
-                            map.removeLayer(layer);
-                        }
-                    });
-                }
-            });
-        }
-
-        // Create journey routes
         function createRoute(journey) {
             const layers = [];
-            const coords = journey.route.map(p => p.coords);
+            const coords = journey.places.map(p => p.coords);
 
-            // Draw route line
+            // Route line
             const routeLine = L.polyline(coords, {
                 color: journey.color,
                 weight: 3,
                 opacity: 0.7,
-                dashArray: '10, 10'
+                dashArray: '5, 10'
             });
             layers.push(routeLine);
 
-            // Add markers with citations
-            journey.route.forEach((point, index) => {
-                const marker = L.circleMarker(point.coords, {
-                    radius: 8,
+            // Markers
+            journey.places.forEach((place, index) => {
+                const marker = L.circleMarker(place.coords, {
+                    radius: 7,
                     fillColor: journey.color,
                     color: 'white',
                     weight: 2,
@@ -582,61 +569,49 @@
                 });
 
                 const popupContent = `
-                    <div class="citation-popup">
-                        <div class="citation-header">
-                            <div class="citation-location">${point.name}</div>
-                            <div class="citation-context">${point.context}</div>
+                    <div style="max-width: 350px;">
+                        <div class="popup-header">${place.name}</div>
+                        <div class="popup-context">${place.context}</div>
+                        <div class="popup-citation">"${place.citation}"</div>
+                        <div class="popup-meta">
+                            <strong>${journey.name}</strong> (${journey.dates})<br>
+                            Ibn Battuta's <em>Rihla</em>
                         </div>
-                        <div class="citation-text">"${point.citation}"</div>
-                        <div class="citation-traveler">— ${journey.traveler}, ${journey.work} (${journey.dates})</div>
                     </div>
                 `;
 
-                marker.bindPopup(popupContent, { maxWidth: 400 });
+                marker.bindPopup(popupContent);
                 layers.push(marker);
             });
 
             routeLayers[journey.id] = layers;
         }
 
-        // Create journey list
-        const journeyList = document.getElementById('journeyList');
-        travelogues.forEach(journey => {
-            const item = document.createElement('div');
-            item.className = 'journey-item active';
-            item.dataset.journey = journey.id;
-            item.innerHTML = `
-                <div class="journey-name">${journey.traveler}</div>
-                <div class="journey-dates">${journey.dates}</div>
-            `;
+        // Show initial route
+        routeLayers['hajj_1325'].forEach(layer => map.addLayer(layer));
 
-            item.addEventListener('click', () => {
-                if (activeJourneys.has(journey.id)) {
-                    activeJourneys.delete(journey.id);
-                    item.classList.remove('active');
-                    routeLayers[journey.id].forEach(layer => map.removeLayer(layer));
-                } else {
-                    activeJourneys.add(journey.id);
-                    item.classList.add('active');
-                    const currentYear = parseInt(slider.value);
-                    if (currentYear >= journey.yearStart && currentYear <= journey.yearEnd) {
-                        routeLayers[journey.id].forEach(layer => map.addLayer(layer));
-                    }
-                }
-            });
-
-            journeyList.appendChild(item);
-            createRoute(journey);
+        // Add note about Spanish embassy continuity
+        const note = L.marker([37.3891, -5.9845], {
+            icon: L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div style='background: #8b0000; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap;'>1766 Spanish Embassy Route →</div>",
+                iconSize: [100, 20],
+                iconAnchor: [0, 10]
+            }),
+            opacity: 0.7
         });
 
-        // Initial render
-        updateTerritories(1608);
-        updateVisibleJourneys(1608);
-        
-        // Show active routes
-        activeJourneys.forEach(journeyId => {
-            routeLayers[journeyId].forEach(layer => map.addLayer(layer));
-        });
+        // Info popup about methodology
+        setTimeout(() => {
+            const infoBox = document.querySelector('.info-box');
+            if (infoBox) {
+                setTimeout(() => {
+                    infoBox.style.opacity = '0';
+                    infoBox.style.transition = 'opacity 1s';
+                    setTimeout(() => infoBox.remove(), 1000);
+                }, 5000);
+            }
+        }, 3000);
     </script>
 </body>
 </html>
